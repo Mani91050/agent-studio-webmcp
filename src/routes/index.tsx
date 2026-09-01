@@ -544,7 +544,7 @@ function AgentStudio() {
               </Button>
             ))}
           </div>
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 [&>div>div]:!block">
             <div className="flex flex-col gap-4 p-4">
               {entries.map((entry) => (
                 <AgentRow key={entry.id} entry={entry} onSelectResult={selectStockResult} />
