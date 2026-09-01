@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   Clapperboard,
   Clock,
+  Eye,
+  Image as ImageIcon,
   Loader2,
   MessageSquareText,
   Minus,
@@ -152,6 +154,43 @@ function AgentStudio() {
   }, []);
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
+
+  const runTool = async (tool: string, args: Record<string, unknown> = {}) => {
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const result = await window.__agentStudioWebMCP?.call(tool, args);
+    const text = result?.content?.[0]?.text ?? "Tool unavailable.";
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: `ctl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: "message",
+        author: "agent",
+        text: result?.isError ? `⚠️ ${text}` : text,
+        time,
+      },
+    ]);
+  };
+
+  const agentControls = [
+    { label: "Get project", icon: Clapperboard, run: () => runTool("get_project") },
+    { label: "Get scene", icon: Eye, run: () => runTool("get_scene", { scene_id: selected.id }) },
+    {
+      label: "Caption",
+      icon: MessageSquareText,
+      run: () => runTool("update_caption", { scene_id: selected.id, caption: selected.caption }),
+    },
+    {
+      label: "+1s",
+      icon: Plus,
+      run: () =>
+        runTool("change_scene_duration", {
+          scene_id: selected.id,
+          duration: Math.min(12, selected.duration + 1),
+        }),
+    },
+    { label: "New visual", icon: ImageIcon, run: () => runTool("replace_scene_visual", { scene_id: selected.id }) },
+    { label: "Preview", icon: Play, run: () => runTool("preview_project") },
+  ];
 
   const sendMessage = async () => {
     const text = draft.trim();
@@ -337,6 +376,21 @@ function AgentStudio() {
               <span className="size-1.5 animate-pulse rounded-full bg-success" />
               Working
             </Badge>
+          </div>
+          <div className="flex flex-wrap gap-1.5 border-b border-border px-3 py-2" aria-label="WebMCP agent controls">
+            {agentControls.map((ctl) => (
+              <Button
+                key={ctl.label}
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 px-2 font-mono text-[10px]"
+                title={`Run WebMCP tool`}
+                onClick={() => void ctl.run()}
+              >
+                <ctl.icon className="size-3 text-teal" />
+                {ctl.label}
+              </Button>
+            ))}
           </div>
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-4 p-4">
