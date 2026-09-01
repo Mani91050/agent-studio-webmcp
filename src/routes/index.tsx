@@ -220,13 +220,15 @@ function AgentStudio() {
   const selectStockResult = useCallback(
     (sceneId: string | null, result: StockResult) => {
       const targetId = sceneId ?? selectedId;
-      updateScene(targetId, { thumbnail: result.thumbnail });
+      const isImage = /\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(result.url) || result.url.startsWith("data:image/");
+      updateScene(targetId, { thumbnail: isImage ? result.url : result.thumbnail });
       logToolCall("replace_scene_visual", `Applied "${result.title}" to the scene.`, {
         sceneId: targetId,
       });
     },
     [selectedId, updateScene, logToolCall],
   );
+
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
 
@@ -267,7 +269,23 @@ function AgentStudio() {
   const runTool = async (tool: string, args: Record<string, unknown> = {}) => {
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const result = await window.__agentStudioWebMCP?.call(tool, args);
-    const text = result?.content?.[0]?.text ?? "Tool unavailable.";
+    const raw = result?.content?.[0]?.text ?? "Tool unavailable.";
+    // search results are rendered as selectable cards by the tool log entry —
+    // never echo the raw JSON payload into the feed.
+    let text = raw;
+    if (tool === "search_stock_visual" && !result?.isError) {
+      let count = 0;
+      try {
+        count = (JSON.parse(raw) as { results?: unknown[] }).results?.length ?? 0;
+      } catch {
+        count = 0;
+      }
+      if (count === 0) {
+        text = "No matching stock footage found.";
+      } else {
+        return;
+      }
+    }
     setEntries((prev) => [
       ...prev,
       {
@@ -279,6 +297,7 @@ function AgentStudio() {
       },
     ]);
   };
+
 
   const agentControls = [
     { label: "Get project", icon: Clapperboard, run: () => runTool("get_project") },
