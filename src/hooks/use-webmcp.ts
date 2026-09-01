@@ -145,7 +145,7 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
       {
         name: "search_stock_visual",
         description:
-          "Search a mock stock-video library for clips matching a query and optionally scoped to a scene. Returns 3 results with title, url, duration, tags and resolution.",
+          "Search real Pexels stock video for clips matching a query and optionally scoped to a scene. Returns matching video results with title, thumbnail, url, duration and resolution.",
         inputSchema: {
           type: "object",
           properties: {
@@ -160,22 +160,42 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
             return textResult("query must be a non-empty string", true);
           }
           const scene = findScene(args["scene_id"]);
-          const words = query.split(/\s+/).filter(Boolean);
-          const label = (i: number) =>
-            words
-              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-              .join(" ");
-          const resolutions = ["1080x1920", "2160x3840", "1080x1920"] as const;
-          const results: StockResult[] = [1, 2, 3].map((i) => ({
-            id: `stock_${words.join("-").toLowerCase().replace(/[^a-z0-9-]/g, "")}_${i}`,
-            title: `${label(i)} — ${["Cinematic loop", "Slow-motion aerial", "Handheld close-up"][i - 1]}`,
-            thumbnail: FALLBACK_VISUALS[(i - 1) % FALLBACK_VISUALS.length]!,
-            url: `https://stock.example.com/clips/${encodeURIComponent(query.toLowerCase().replace(/\s+/g, "-"))}-${i}.mp4`,
-            duration: [6, 9, 4][i - 1]!,
-            resolution: resolutions[i - 1]!,
+          const response = await fetch(
+            `/api/stock-search?query=${encodeURIComponent(query)}`,
+          );
+
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            return textResult(
+              typeof data.error === "string"
+                ? data.error
+                : "Stock footage search failed",
+              true,
+            );
+          }
+
+          const data = await response.json();
+
+          const results: StockResult[] = (data.results ?? []).map((item: any) => ({
+            id: String(item.id),
+            title: String(item.title),
+            thumbnail: String(item.thumbnail),
+            url: String(item.url),
+            duration: Number(item.duration) || 0,
+            resolution: `${item.width}x${item.height}`,
           }));
+
+          if (results.length === 0) {
+            return jsonResult({
+              query,
+              scene_id: scene?.id ?? null,
+              count: 0,
+              results: [],
+              message: "No matching stock footage found.",
+            });
+          }
           const scope = scene ? ` for scene ${scene.index} "${scene.title}"` : "";
-          logToolCall("search_stock_visual", `Searched "${query}"${scope} — 3 results.`, {
+          logToolCall("search_stock_visual", `Searched "${query}"${scope} — ${results.length} results.`, {
             sceneId: scene?.id ?? null,
             results,
           });
