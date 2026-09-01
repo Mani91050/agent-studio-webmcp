@@ -104,7 +104,9 @@ function AgentRow({
                 <CheckCircle2 className="size-3 text-success" />
               )}
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{entry.text}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
+              {entry.text}
+            </p>
             {entry.results && entry.results.length > 0 && (
               <div className="mt-2 flex flex-col gap-2">
                 {entry.results.map((r) => (
