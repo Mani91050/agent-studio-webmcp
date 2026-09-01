@@ -220,13 +220,15 @@ function AgentStudio() {
   const selectStockResult = useCallback(
     (sceneId: string | null, result: StockResult) => {
       const targetId = sceneId ?? selectedId;
-      updateScene(targetId, { thumbnail: result.thumbnail });
+      const isImage = /\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(result.url) || result.url.startsWith("data:image/");
+      updateScene(targetId, { thumbnail: isImage ? result.url : result.thumbnail });
       logToolCall("replace_scene_visual", `Applied "${result.title}" to the scene.`, {
         sceneId: targetId,
       });
     },
     [selectedId, updateScene, logToolCall],
   );
+
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
 
