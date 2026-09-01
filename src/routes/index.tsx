@@ -114,6 +114,7 @@ function AgentRow({ entry }: { entry: AgentEntry }) {
 function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
+  const [entries, setEntries] = useState<AgentEntry[]>(agentActivity);
 
   const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0]!;
   const totalDuration = useMemo(
@@ -121,11 +122,31 @@ function AgentStudio() {
     [scenes],
   );
 
-  const updateSelected = (patch: Partial<{ caption: string; duration: number }>) => {
-    setScenes((prev) =>
-      prev.map((s) => (s.id === selected.id ? { ...s, ...patch } : s)),
-    );
+  const updateScene = (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail">>) => {
+    setScenes((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   };
+
+  const updateSelected = (patch: Partial<{ caption: string; duration: number }>) => {
+    updateScene(selected.id, patch);
+  };
+
+  const logToolCall = (toolName: string, text: string) => {
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: `webmcp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: "tool",
+        author: "agent",
+        toolName,
+        toolStatus: "done",
+        text,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        source: "webmcp",
+      },
+    ]);
+  };
+
+  useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -263,7 +284,7 @@ function AgentStudio() {
           </div>
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-4 p-4">
-              {agentActivity.map((entry) => (
+              {entries.map((entry) => (
                 <AgentRow key={entry.id} entry={entry} />
               ))}
             </div>
