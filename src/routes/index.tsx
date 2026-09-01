@@ -109,7 +109,7 @@ function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
   const [selectedId, setSelectedId] = useState(initialScenes[0].id);
 
-  const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0];
+  const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0]!;
   const totalDuration = useMemo(
     () => scenes.reduce((sum, s) => sum + s.duration, 0),
     [scenes],
