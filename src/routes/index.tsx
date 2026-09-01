@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Bot,
   CheckCircle2,
@@ -14,7 +14,8 @@ import {
   User,
   Wrench,
 } from "lucide-react";
-import { agentActivity, initialScenes, type AgentEntry } from "@/lib/mock-data";
+import { agentActivity, initialScenes, type AgentEntry, type Scene } from "@/lib/mock-data";
+import { useWebMCP } from "@/hooks/use-webmcp";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,11 @@ function AgentRow({ entry }: { entry: AgentEntry }) {
             <div className="flex items-center gap-2 font-mono text-[11px] text-teal">
               <Wrench className="size-3" />
               {entry.toolName}
+              {entry.source === "webmcp" && (
+                <span className="rounded bg-teal/15 px-1 py-px text-[9px] uppercase tracking-wide text-teal">
+                  WebMCP
+                </span>
+              )}
               {entry.toolStatus === "running" ? (
                 <Loader2 className="size-3 animate-spin text-amber" />
               ) : (
@@ -108,6 +114,7 @@ function AgentRow({ entry }: { entry: AgentEntry }) {
 function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
+  const [entries, setEntries] = useState<AgentEntry[]>(agentActivity);
 
   const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0]!;
   const totalDuration = useMemo(
@@ -115,11 +122,34 @@ function AgentStudio() {
     [scenes],
   );
 
+  const updateScene = useCallback(
+    (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail">>) => {
+      setScenes((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    },
+    [],
+  );
+
   const updateSelected = (patch: Partial<{ caption: string; duration: number }>) => {
-    setScenes((prev) =>
-      prev.map((s) => (s.id === selected.id ? { ...s, ...patch } : s)),
-    );
+    updateScene(selected.id, patch);
   };
+
+  const logToolCall = useCallback((toolName: string, text: string) => {
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: `webmcp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: "tool",
+        author: "agent",
+        toolName,
+        toolStatus: "done",
+        text,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        source: "webmcp",
+      },
+    ]);
+  }, []);
+
+  useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -257,7 +287,7 @@ function AgentStudio() {
           </div>
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-4 p-4">
-              {agentActivity.map((entry) => (
+              {entries.map((entry) => (
                 <AgentRow key={entry.id} entry={entry} />
               ))}
             </div>
