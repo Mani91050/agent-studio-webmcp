@@ -107,7 +107,7 @@ function AgentRow({ entry }: { entry: AgentEntry }) {
 
 function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
-  const [selectedId, setSelectedId] = useState(initialScenes[0].id);
+  const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
 
   const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0]!;
   const totalDuration = useMemo(
