@@ -377,6 +377,21 @@ function AgentStudio() {
               Working
             </Badge>
           </div>
+          <div className="flex flex-wrap gap-1.5 border-b border-border px-3 py-2" aria-label="WebMCP agent controls">
+            {agentControls.map((ctl) => (
+              <Button
+                key={ctl.label}
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 px-2 font-mono text-[10px]"
+                title={`Run WebMCP tool`}
+                onClick={() => void ctl.run()}
+              >
+                <ctl.icon className="size-3 text-teal" />
+                {ctl.label}
+              </Button>
+            ))}
+          </div>
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-4 p-4">
               {entries.map((entry) => (
