@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { agentActivity, initialScenes, type AgentEntry, type Scene } from "@/lib/mock-data";
 import { useWebMCP } from "@/hooks/use-webmcp";
+import { interpretRequest } from "@/lib/chat-interpreter";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
