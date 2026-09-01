@@ -122,15 +122,18 @@ function AgentStudio() {
     [scenes],
   );
 
-  const updateScene = (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail">>) => {
-    setScenes((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-  };
+  const updateScene = useCallback(
+    (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail">>) => {
+      setScenes((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    },
+    [],
+  );
 
   const updateSelected = (patch: Partial<{ caption: string; duration: number }>) => {
     updateScene(selected.id, patch);
   };
 
-  const logToolCall = (toolName: string, text: string) => {
+  const logToolCall = useCallback((toolName: string, text: string) => {
     setEntries((prev) => [
       ...prev,
       {
