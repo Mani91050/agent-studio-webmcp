@@ -472,7 +472,7 @@ function AgentStudio() {
                 />
               </div>
               <span className="font-mono text-[10px] text-white/80">
-                0:0{selected.duration}
+                {formatDuration(selected.duration)}
               </span>
             </div>
           </div>
