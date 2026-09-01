@@ -159,6 +159,10 @@ function AgentStudio() {
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
   const [entries, setEntries] = useState<AgentEntry[]>(agentActivity);
   const [draft, setDraft] = useState("");
+  const [pendingVisual, setPendingVisual] = useState<{
+    sceneId: string;
+    result: StockResult;
+  } | null>(null);
 
   const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0]!;
   const totalDuration = useMemo(
@@ -210,6 +214,35 @@ function AgentStudio() {
   );
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
+
+  const approveVisual = useCallback(async () => {
+    if (!pendingVisual) return;
+
+    const { sceneId, result } = pendingVisual;
+    const response = await window.__agentStudioWebMCP?.call("replace_scene_visual", {
+      scene_id: sceneId,
+      image_url: result.thumbnail,
+    });
+
+    if (!response?.isError) {
+      logToolCall("replace_scene_visual", `Approved "${result.title}" for scene ${sceneId}.`, {
+        sceneId,
+      });
+    }
+
+    setPendingVisual(null);
+  }, [pendingVisual, logToolCall]);
+
+  const rejectVisual = useCallback(() => {
+    if (!pendingVisual) return;
+
+    logToolCall("replace_scene_visual", `Rejected visual "${pendingVisual.result.title}".`, {
+      sceneId: pendingVisual.sceneId,
+    });
+
+    setPendingVisual(null);
+  }, [pendingVisual, logToolCall]);
+
 
   const runTool = async (tool: string, args: Record<string, unknown> = {}) => {
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -300,8 +333,9 @@ function AgentStudio() {
           const parsed = JSON.parse(resultText) as { results?: StockResult[]; scene_id?: string | null };
           const best = parsed.results?.[0];
           if (best) {
-            selectStockResult(parsed.scene_id ?? null, best);
-            summaries.push(`Auto-selected the top match: "${best.title}" — applied to the scene.`);
+            const targetId = parsed.scene_id ?? selectedId;
+            setPendingVisual({ sceneId: targetId, result: best });
+            summaries.push(`Proposed "${best.title}" for scene ${targetId}. Waiting for approval.`);
           }
         } catch {
           // no parsable results; leave manual selection
@@ -451,6 +485,33 @@ function AgentStudio() {
               Working
             </Badge>
           </div>
+          {pendingVisual && (
+            <div className="border-b border-border p-3">
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-sm font-medium">Agent proposes a visual change</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Replace scene {pendingVisual.sceneId} with "{pendingVisual.result.title}"?
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={approveVisual}
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={rejectVisual}
+                    className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-1.5 border-b border-border px-3 py-2" aria-label="WebMCP agent controls">
             {agentControls.map((ctl) => (
               <Button
