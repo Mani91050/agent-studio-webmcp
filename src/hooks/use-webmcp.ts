@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import scene1 from "@/assets/scene-1.jpg";
 import scene2 from "@/assets/scene-2.jpg";
 import scene3 from "@/assets/scene-3.jpg";
-import type { Scene } from "@/lib/mock-data";
+import type { Scene, StockResult } from "@/lib/mock-data";
 import { registerWebMCPTools, jsonResult, textResult, type WebMCPTool } from "@/lib/webmcp";
 
 const FALLBACK_VISUALS = [scene1, scene2, scene3];
@@ -12,7 +12,11 @@ interface UseWebMCPOptions {
   scenes: Scene[];
   selectedScene: Scene;
   updateScene: (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail">>) => void;
-  logToolCall: (toolName: string, text: string) => void;
+  logToolCall: (
+    toolName: string,
+    text: string,
+    extra?: { sceneId?: string | null; results?: StockResult[] },
+  ) => void;
 }
 
 const sceneView = (s: Scene) => ({

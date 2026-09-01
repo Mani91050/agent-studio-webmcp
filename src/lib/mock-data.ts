@@ -44,6 +44,15 @@ export const initialScenes: Scene[] = [
 
 export type AgentEntryType = "message" | "tool";
 
+export interface StockResult {
+  id: string;
+  title: string;
+  thumbnail: string;
+  url: string;
+  duration: number;
+  resolution: string;
+}
+
 export interface AgentEntry {
   id: string;
   type: AgentEntryType;
@@ -53,6 +62,8 @@ export interface AgentEntry {
   toolStatus?: "done" | "running";
   time: string;
   source?: "webmcp";
+  sceneId?: string;
+  results?: StockResult[];
 }
 
 export const agentActivity: AgentEntry[] = [
