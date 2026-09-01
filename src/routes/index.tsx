@@ -188,9 +188,9 @@ function AgentStudio() {
       if (result?.isError) {
         summaries.push(`⚠️ ${resultText}`);
       } else if (call.tool === "update_caption") {
-        summaries.push(`Caption updated: "${String(call.args.caption)}"`);
+        summaries.push(`Caption updated: "${String(call.args["caption"])}"`);
       } else if (call.tool === "change_scene_duration") {
-        summaries.push(`Duration set to ${String(call.args.duration)}s.`);
+        summaries.push(`Duration set to ${String(call.args["duration"])}s.`);
       } else if (call.tool === "replace_scene_visual") {
         summaries.push("Scene visual replaced.");
       } else if (call.tool === "get_scene" || call.tool === "get_project" || call.tool === "preview_project") {
