@@ -46,6 +46,11 @@ export const Route = createFileRoute("/")({
   component: AgentStudio,
 });
 
+function formatDuration(seconds: number) {
+  const s = Math.max(0, Math.round(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 function statusBadge(status: string) {
   if (status === "rendering") {
     return (
