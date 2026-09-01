@@ -46,6 +46,11 @@ export const Route = createFileRoute("/")({
   component: AgentStudio,
 });
 
+function formatDuration(seconds: number) {
+  const s = Math.max(0, Math.round(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 function statusBadge(status: string) {
   if (status === "rendering") {
     return (
@@ -73,7 +78,7 @@ function AgentRow({
 }) {
   const isUser = entry.author === "user";
   return (
-    <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
+    <div className={cn("flex w-full min-w-0 gap-3", isUser && "flex-row-reverse")}>
       <div
         className={cn(
           "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-border",
@@ -99,7 +104,9 @@ function AgentRow({
                 <CheckCircle2 className="size-3 text-success" />
               )}
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{entry.text}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
+              {entry.text}
+            </p>
             {entry.results && entry.results.length > 0 && (
               <div className="mt-2 flex flex-col gap-2">
                 {entry.results.map((r) => (
@@ -137,7 +144,7 @@ function AgentRow({
         ) : (
           <div
             className={cn(
-              "rounded-lg px-3 py-2 text-sm leading-relaxed",
+              "whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm leading-relaxed",
               isUser
                 ? "bg-teal text-teal-foreground"
                 : "border border-border bg-panel-raised text-foreground",
@@ -224,7 +231,13 @@ function AgentStudio() {
       image_url: result.thumbnail,
     });
 
-    if (!response?.isError) {
+    if (response?.isError) {
+      logToolCall(
+        "replace_scene_visual",
+        `⚠️ Could not apply "${result.title}": ${response.content?.[0]?.text ?? "unknown error"}`,
+        { sceneId },
+      );
+    } else {
       logToolCall("replace_scene_visual", `Approved "${result.title}" for scene ${sceneId}.`, {
         sceneId,
       });
@@ -371,7 +384,11 @@ function AgentStudio() {
           <span className="hidden font-mono text-xs text-muted-foreground sm:block">
             {totalDuration}s · 9:16
           </span>
-          <Button size="sm" className="bg-teal text-teal-foreground hover:bg-teal/90">
+          <Button
+            size="sm"
+            className="bg-teal text-teal-foreground hover:bg-teal/90"
+            onClick={() => void runTool("preview_project")}
+          >
             <Play className="size-3.5" /> Preview
           </Button>
         </div>
@@ -466,7 +483,7 @@ function AgentStudio() {
                 />
               </div>
               <span className="font-mono text-[10px] text-white/80">
-                0:0{selected.duration}
+                {formatDuration(selected.duration)}
               </span>
             </div>
           </div>
@@ -527,7 +544,7 @@ function AgentStudio() {
               </Button>
             ))}
           </div>
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 [&>div>div]:!block">
             <div className="flex flex-col gap-4 p-4">
               {entries.map((entry) => (
                 <AgentRow key={entry.id} entry={entry} onSelectResult={selectStockResult} />
