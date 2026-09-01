@@ -177,21 +177,37 @@ function AgentStudio() {
     updateScene(selected.id, patch);
   };
 
-  const logToolCall = useCallback((toolName: string, text: string) => {
-    setEntries((prev) => [
-      ...prev,
-      {
-        id: `webmcp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        type: "tool",
-        author: "agent",
-        toolName,
-        toolStatus: "done",
-        text,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        source: "webmcp",
-      },
-    ]);
-  }, []);
+  const logToolCall = useCallback(
+    (toolName: string, text: string, extra?: { sceneId?: string | null; results?: StockResult[] }) => {
+      setEntries((prev) => [
+        ...prev,
+        {
+          id: `webmcp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          type: "tool",
+          author: "agent",
+          toolName,
+          toolStatus: "done",
+          text,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          source: "webmcp",
+          sceneId: extra?.sceneId ?? undefined,
+          results: extra?.results,
+        },
+      ]);
+    },
+    [],
+  );
+
+  const selectStockResult = useCallback(
+    (sceneId: string | null, result: StockResult) => {
+      const targetId = sceneId ?? selectedId;
+      updateScene(targetId, { thumbnail: result.thumbnail });
+      logToolCall("replace_scene_visual", `Applied "${result.title}" to the scene.`, {
+        sceneId: targetId,
+      });
+    },
+    [selectedId, updateScene, logToolCall],
+  );
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
 
@@ -229,6 +245,12 @@ function AgentStudio() {
         }),
     },
     { label: "New visual", icon: ImageIcon, run: () => runTool("replace_scene_visual", { scene_id: selected.id }) },
+    {
+      label: "Search",
+      icon: Search,
+      run: () =>
+        runTool("search_stock_visual", { query: selected.title.toLowerCase(), scene_id: selected.id }),
+    },
     { label: "Preview", icon: Play, run: () => runTool("preview_project") },
   ];
 
@@ -272,6 +294,8 @@ function AgentStudio() {
         summaries.push(`Duration set to ${String(call.args["duration"])}s.`);
       } else if (call.tool === "replace_scene_visual") {
         summaries.push("Scene visual replaced.");
+      } else if (call.tool === "search_stock_visual") {
+        summaries.push(`Found 3 stock clips for "${String(call.args["query"])}" — pick one above.`);
       } else if (call.tool === "get_scene" || call.tool === "get_project" || call.tool === "preview_project") {
         summaries.push(resultText);
       }
@@ -435,7 +459,7 @@ function AgentStudio() {
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-4 p-4">
               {entries.map((entry) => (
-                <AgentRow key={entry.id} entry={entry} />
+                <AgentRow key={entry.id} entry={entry} onSelectResult={selectStockResult} />
               ))}
             </div>
           </ScrollArea>
