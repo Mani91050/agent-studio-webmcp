@@ -144,7 +144,7 @@ function AgentRow({
         ) : (
           <div
             className={cn(
-              "rounded-lg px-3 py-2 text-sm leading-relaxed",
+              "whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm leading-relaxed",
               isUser
                 ? "bg-teal text-teal-foreground"
                 : "border border-border bg-panel-raised text-foreground",
