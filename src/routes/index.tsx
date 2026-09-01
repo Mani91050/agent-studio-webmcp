@@ -382,7 +382,11 @@ function AgentStudio() {
           <span className="hidden font-mono text-xs text-muted-foreground sm:block">
             {totalDuration}s · 9:16
           </span>
-          <Button size="sm" className="bg-teal text-teal-foreground hover:bg-teal/90">
+          <Button
+            size="sm"
+            className="bg-teal text-teal-foreground hover:bg-teal/90"
+            onClick={() => void runTool("preview_project")}
+          >
             <Play className="size-3.5" /> Preview
           </Button>
         </div>
