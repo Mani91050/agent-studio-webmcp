@@ -116,6 +116,7 @@ function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
   const [entries, setEntries] = useState<AgentEntry[]>(agentActivity);
+  const [draft, setDraft] = useState("");
 
   const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0]!;
   const totalDuration = useMemo(
