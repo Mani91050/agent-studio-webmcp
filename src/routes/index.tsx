@@ -295,7 +295,17 @@ function AgentStudio() {
       } else if (call.tool === "replace_scene_visual") {
         summaries.push("Scene visual replaced.");
       } else if (call.tool === "search_stock_visual") {
-        summaries.push(`Found 3 stock clips for "${String(call.args["query"])}" — pick one above.`);
+        summaries.push(`Found 3 stock clips for "${String(call.args["query"])}".`);
+        try {
+          const parsed = JSON.parse(resultText) as { results?: StockResult[]; scene_id?: string | null };
+          const best = parsed.results?.[0];
+          if (best) {
+            selectStockResult(parsed.scene_id ?? null, best);
+            summaries.push(`Auto-selected the top match: "${best.title}" — applied to the scene.`);
+          }
+        } catch {
+          // no parsable results; leave manual selection
+        }
       } else if (call.tool === "get_scene" || call.tool === "get_project" || call.tool === "preview_project") {
         summaries.push(resultText);
       }
