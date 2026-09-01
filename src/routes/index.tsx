@@ -78,7 +78,7 @@ function AgentRow({ entry }: { entry: AgentEntry }) {
             <div className="flex items-center gap-2 font-mono text-[11px] text-teal">
               <Wrench className="size-3" />
               {entry.toolName}
-              {entry.time.startsWith("webmcp") && (
+              {entry.source === "webmcp" && (
                 <span className="rounded bg-teal/15 px-1 py-px text-[9px] uppercase tracking-wide text-teal">
                   WebMCP
                 </span>

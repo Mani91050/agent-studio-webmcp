@@ -52,6 +52,7 @@ export interface AgentEntry {
   toolName?: string;
   toolStatus?: "done" | "running";
   time: string;
+  source?: "webmcp";
 }
 
 export const agentActivity: AgentEntry[] = [
