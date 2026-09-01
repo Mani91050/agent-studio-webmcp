@@ -78,7 +78,7 @@ function AgentRow({
 }) {
   const isUser = entry.author === "user";
   return (
-    <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
+    <div className={cn("flex w-full min-w-0 gap-3", isUser && "flex-row-reverse")}>
       <div
         className={cn(
           "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-border",
