@@ -139,6 +139,45 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
         },
       },
       {
+        name: "search_stock_visual",
+        description:
+          "Search a mock stock-video library for clips matching a query and optionally scoped to a scene. Returns 3 results with title, url, duration, tags and resolution.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Search keywords, e.g. 'neon city night'." },
+            scene_id: { type: "string", description: "Scene id or number the search is for; optional." },
+          },
+          required: ["query"],
+        },
+        execute: async (args) => {
+          const query = typeof args["query"] === "string" ? args["query"].trim() : "";
+          if (!query) {
+            return textResult("query must be a non-empty string", true);
+          }
+          const scene = findScene(args["scene_id"]);
+          const words = query.split(/\s+/).filter(Boolean);
+          const label = (i: number) =>
+            words
+              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(" ");
+          const resolutions = ["1080x1920", "2160x3840", "1080x1920"] as const;
+          const results = [1, 2, 3].map((i) => ({
+            id: `stock_${words.join("-").toLowerCase().replace(/[^a-z0-9-]/g, "")}_${i}`,
+            title: `${label(i)} — ${["Cinematic loop", "Slow-motion aerial", "Handheld close-up"][i - 1]}`,
+            url: `https://stock.example.com/clips/${encodeURIComponent(query.toLowerCase().replace(/\s+/g, "-"))}-${i}.mp4`,
+            duration: [6, 9, 4][i - 1],
+            resolution: resolutions[i - 1],
+            format: "9:16",
+            tags: words,
+            relevance: Number((0.95 - (i - 1) * 0.08).toFixed(2)),
+          }));
+          const scope = scene ? ` for scene ${scene.index} "${scene.title}"` : "";
+          logToolCall("search_stock_visual", `Searched "${query}"${scope} — 3 results.`);
+          return jsonResult({ query, scene_id: scene?.id ?? null, count: results.length, results });
+        },
+      },
+      {
         name: "preview_project",
         description: "Get a preview summary of the full project in playback order (scenes, captions, durations).",
         inputSchema: { type: "object", properties: {} },
