@@ -12,11 +12,12 @@ import {
   Minus,
   Play,
   Plus,
+  Search,
   Sparkles,
   User,
   Wrench,
 } from "lucide-react";
-import { agentActivity, initialScenes, type AgentEntry, type Scene } from "@/lib/mock-data";
+import { agentActivity, initialScenes, type AgentEntry, type Scene, type StockResult } from "@/lib/mock-data";
 import { useWebMCP } from "@/hooks/use-webmcp";
 import { interpretRequest } from "@/lib/chat-interpreter";
 import { cn } from "@/lib/utils";
@@ -63,7 +64,13 @@ function statusBadge(status: string) {
   return <Badge variant="secondary">Draft</Badge>;
 }
 
-function AgentRow({ entry }: { entry: AgentEntry }) {
+function AgentRow({
+  entry,
+  onSelectResult,
+}: {
+  entry: AgentEntry;
+  onSelectResult: (sceneId: string | null, result: StockResult) => void;
+}) {
   const isUser = entry.author === "user";
   return (
     <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
@@ -93,6 +100,39 @@ function AgentRow({ entry }: { entry: AgentEntry }) {
               )}
             </div>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{entry.text}</p>
+            {entry.results && entry.results.length > 0 && (
+              <div className="mt-2 flex flex-col gap-2">
+                {entry.results.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-2 rounded-md border border-border bg-panel p-1.5"
+                  >
+                    <img
+                      src={r.thumbnail}
+                      alt={r.title}
+                      width={96}
+                      height={54}
+                      loading="lazy"
+                      className="h-12 w-20 shrink-0 rounded object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] font-medium text-foreground">{r.title}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground">
+                        {r.duration}s · {r.resolution}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 shrink-0 px-2 text-[10px]"
+                      onClick={() => onSelectResult(entry.sceneId ?? null, r)}
+                    >
+                      Select
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div
