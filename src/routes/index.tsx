@@ -224,7 +224,13 @@ function AgentStudio() {
       image_url: result.thumbnail,
     });
 
-    if (!response?.isError) {
+    if (response?.isError) {
+      logToolCall(
+        "replace_scene_visual",
+        `⚠️ Could not apply "${result.title}": ${response.content?.[0]?.text ?? "unknown error"}`,
+        { sceneId },
+      );
+    } else {
       logToolCall("replace_scene_visual", `Approved "${result.title}" for scene ${sceneId}.`, {
         sceneId,
       });
