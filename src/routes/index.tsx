@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   Clapperboard,
   Clock,
+  Eye,
+  Image as ImageIcon,
   Loader2,
   MessageSquareText,
   Minus,
@@ -152,6 +154,43 @@ function AgentStudio() {
   }, []);
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
+
+  const runTool = async (tool: string, args: Record<string, unknown> = {}) => {
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const result = await window.__agentStudioWebMCP?.call(tool, args);
+    const text = result?.content?.[0]?.text ?? "Tool unavailable.";
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: `ctl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: "message",
+        author: "agent",
+        text: result?.isError ? `⚠️ ${text}` : text,
+        time,
+      },
+    ]);
+  };
+
+  const agentControls = [
+    { label: "Get project", icon: Clapperboard, run: () => runTool("get_project") },
+    { label: "Get scene", icon: Eye, run: () => runTool("get_scene", { scene_id: selected.id }) },
+    {
+      label: "Caption",
+      icon: MessageSquareText,
+      run: () => runTool("update_caption", { scene_id: selected.id, caption: selected.caption }),
+    },
+    {
+      label: "+1s",
+      icon: Plus,
+      run: () =>
+        runTool("change_scene_duration", {
+          scene_id: selected.id,
+          duration: Math.min(12, selected.duration + 1),
+        }),
+    },
+    { label: "New visual", icon: ImageIcon, run: () => runTool("replace_scene_visual", { scene_id: selected.id }) },
+    { label: "Preview", icon: Play, run: () => runTool("preview_project") },
+  ];
 
   const sendMessage = async () => {
     const text = draft.trim();
