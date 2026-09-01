@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { agentActivity, initialScenes, type AgentEntry, type Scene } from "@/lib/mock-data";
 import { useWebMCP } from "@/hooks/use-webmcp";
+import { interpretRequest } from "@/lib/chat-interpreter";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,7 @@ function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
   const [entries, setEntries] = useState<AgentEntry[]>(agentActivity);
+  const [draft, setDraft] = useState("");
 
   const selected = scenes.find((s) => s.id === selectedId) ?? initialScenes[0]!;
   const totalDuration = useMemo(
@@ -150,6 +152,57 @@ function AgentStudio() {
   }, []);
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
+
+  const sendMessage = async () => {
+    const text = draft.trim();
+    if (!text) return;
+    setDraft("");
+    const time = () =>
+      new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const uid = () => `chat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+    setEntries((prev) => [
+      ...prev,
+      { id: uid(), type: "message", author: "user", text, time: time() },
+    ]);
+
+    const calls = interpretRequest(text);
+    if (calls.length === 0) {
+      setEntries((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          type: "message",
+          author: "agent",
+          text: 'I can adjust scenes for you. Try "Change scene 1 caption to…", "Make scene 2 5 seconds", "Replace scene 3 visual", or "Show me the project".',
+          time: time(),
+        },
+      ]);
+      return;
+    }
+
+    const summaries: string[] = [];
+    for (const call of calls) {
+      const result = await window.__agentStudioWebMCP?.call(call.tool, call.args);
+      const resultText = result?.content?.[0]?.text ?? "";
+      if (result?.isError) {
+        summaries.push(`⚠️ ${resultText}`);
+      } else if (call.tool === "update_caption") {
+        summaries.push(`Caption updated: "${String(call.args["caption"])}"`);
+      } else if (call.tool === "change_scene_duration") {
+        summaries.push(`Duration set to ${String(call.args["duration"])}s.`);
+      } else if (call.tool === "replace_scene_visual") {
+        summaries.push("Scene visual replaced.");
+      } else if (call.tool === "get_scene" || call.tool === "get_project" || call.tool === "preview_project") {
+        summaries.push(resultText);
+      }
+    }
+
+    setEntries((prev) => [
+      ...prev,
+      { id: uid(), type: "message", author: "agent", text: summaries.join("\n\n"), time: time() },
+    ]);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -296,10 +349,20 @@ function AgentStudio() {
             <div className="flex items-center gap-2 rounded-lg border border-input bg-panel-raised px-3 py-2">
               <MessageSquareText className="size-4 text-muted-foreground" />
               <input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void sendMessage();
+                }}
                 placeholder="Ask the agent to adjust a scene…"
+                aria-label="Message the agent"
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
-              <Button size="sm" className="bg-teal text-teal-foreground hover:bg-teal/90">
+              <Button
+                size="sm"
+                className="bg-teal text-teal-foreground hover:bg-teal/90"
+                onClick={() => void sendMessage()}
+              >
                 Send
               </Button>
             </div>
