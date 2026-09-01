@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/stock-search")({
           );
         }
 
-        const apiKey = process.env.PEXELS_API_KEY;
+        const apiKey = process.env["PEXELS_API_KEY"];
 
         if (!apiKey) {
           return Response.json(
