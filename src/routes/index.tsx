@@ -190,8 +190,8 @@ function AgentStudio() {
           text,
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           source: "webmcp",
-          sceneId: extra?.sceneId ?? undefined,
-          results: extra?.results,
+          ...(extra?.sceneId ? { sceneId: extra.sceneId } : {}),
+          ...(extra?.results ? { results: extra.results } : {}),
         },
       ]);
     },
