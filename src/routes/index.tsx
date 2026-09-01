@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Bot,
   CheckCircle2,
@@ -147,7 +147,7 @@ function AgentStudio() {
         source: "webmcp",
       },
     ]);
-  };
+  }, []);
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
 
