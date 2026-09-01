@@ -166,18 +166,19 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
               .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
               .join(" ");
           const resolutions = ["1080x1920", "2160x3840", "1080x1920"] as const;
-          const results = [1, 2, 3].map((i) => ({
+          const results: StockResult[] = [1, 2, 3].map((i) => ({
             id: `stock_${words.join("-").toLowerCase().replace(/[^a-z0-9-]/g, "")}_${i}`,
             title: `${label(i)} — ${["Cinematic loop", "Slow-motion aerial", "Handheld close-up"][i - 1]}`,
+            thumbnail: FALLBACK_VISUALS[(i - 1) % FALLBACK_VISUALS.length]!,
             url: `https://stock.example.com/clips/${encodeURIComponent(query.toLowerCase().replace(/\s+/g, "-"))}-${i}.mp4`,
-            duration: [6, 9, 4][i - 1],
-            resolution: resolutions[i - 1],
-            format: "9:16",
-            tags: words,
-            relevance: Number((0.95 - (i - 1) * 0.08).toFixed(2)),
+            duration: [6, 9, 4][i - 1]!,
+            resolution: resolutions[i - 1]!,
           }));
           const scope = scene ? ` for scene ${scene.index} "${scene.title}"` : "";
-          logToolCall("search_stock_visual", `Searched "${query}"${scope} — 3 results.`);
+          logToolCall("search_stock_visual", `Searched "${query}"${scope} — 3 results.`, {
+            sceneId: scene?.id ?? null,
+            results,
+          });
           return jsonResult({ query, scene_id: scene?.id ?? null, count: results.length, results });
         },
       },

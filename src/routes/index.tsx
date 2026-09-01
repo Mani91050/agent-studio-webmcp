@@ -12,11 +12,12 @@ import {
   Minus,
   Play,
   Plus,
+  Search,
   Sparkles,
   User,
   Wrench,
 } from "lucide-react";
-import { agentActivity, initialScenes, type AgentEntry, type Scene } from "@/lib/mock-data";
+import { agentActivity, initialScenes, type AgentEntry, type Scene, type StockResult } from "@/lib/mock-data";
 import { useWebMCP } from "@/hooks/use-webmcp";
 import { interpretRequest } from "@/lib/chat-interpreter";
 import { cn } from "@/lib/utils";
@@ -63,7 +64,13 @@ function statusBadge(status: string) {
   return <Badge variant="secondary">Draft</Badge>;
 }
 
-function AgentRow({ entry }: { entry: AgentEntry }) {
+function AgentRow({
+  entry,
+  onSelectResult,
+}: {
+  entry: AgentEntry;
+  onSelectResult: (sceneId: string | null, result: StockResult) => void;
+}) {
   const isUser = entry.author === "user";
   return (
     <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
@@ -93,6 +100,39 @@ function AgentRow({ entry }: { entry: AgentEntry }) {
               )}
             </div>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{entry.text}</p>
+            {entry.results && entry.results.length > 0 && (
+              <div className="mt-2 flex flex-col gap-2">
+                {entry.results.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-2 rounded-md border border-border bg-panel p-1.5"
+                  >
+                    <img
+                      src={r.thumbnail}
+                      alt={r.title}
+                      width={96}
+                      height={54}
+                      loading="lazy"
+                      className="h-12 w-20 shrink-0 rounded object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] font-medium text-foreground">{r.title}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground">
+                        {r.duration}s · {r.resolution}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 shrink-0 px-2 text-[10px]"
+                      onClick={() => onSelectResult(entry.sceneId ?? null, r)}
+                    >
+                      Select
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div
@@ -137,21 +177,37 @@ function AgentStudio() {
     updateScene(selected.id, patch);
   };
 
-  const logToolCall = useCallback((toolName: string, text: string) => {
-    setEntries((prev) => [
-      ...prev,
-      {
-        id: `webmcp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        type: "tool",
-        author: "agent",
-        toolName,
-        toolStatus: "done",
-        text,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        source: "webmcp",
-      },
-    ]);
-  }, []);
+  const logToolCall = useCallback(
+    (toolName: string, text: string, extra?: { sceneId?: string | null; results?: StockResult[] }) => {
+      setEntries((prev) => [
+        ...prev,
+        {
+          id: `webmcp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          type: "tool",
+          author: "agent",
+          toolName,
+          toolStatus: "done",
+          text,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          source: "webmcp",
+          ...(extra?.sceneId ? { sceneId: extra.sceneId } : {}),
+          ...(extra?.results ? { results: extra.results } : {}),
+        },
+      ]);
+    },
+    [],
+  );
+
+  const selectStockResult = useCallback(
+    (sceneId: string | null, result: StockResult) => {
+      const targetId = sceneId ?? selectedId;
+      updateScene(targetId, { thumbnail: result.thumbnail });
+      logToolCall("replace_scene_visual", `Applied "${result.title}" to the scene.`, {
+        sceneId: targetId,
+      });
+    },
+    [selectedId, updateScene, logToolCall],
+  );
 
   useWebMCP({ scenes, selectedScene: selected, updateScene, logToolCall });
 
@@ -189,6 +245,12 @@ function AgentStudio() {
         }),
     },
     { label: "New visual", icon: ImageIcon, run: () => runTool("replace_scene_visual", { scene_id: selected.id }) },
+    {
+      label: "Search",
+      icon: Search,
+      run: () =>
+        runTool("search_stock_visual", { query: selected.title.toLowerCase(), scene_id: selected.id }),
+    },
     { label: "Preview", icon: Play, run: () => runTool("preview_project") },
   ];
 
@@ -232,6 +294,8 @@ function AgentStudio() {
         summaries.push(`Duration set to ${String(call.args["duration"])}s.`);
       } else if (call.tool === "replace_scene_visual") {
         summaries.push("Scene visual replaced.");
+      } else if (call.tool === "search_stock_visual") {
+        summaries.push(`Found 3 stock clips for "${String(call.args["query"])}" — pick one above.`);
       } else if (call.tool === "get_scene" || call.tool === "get_project" || call.tool === "preview_project") {
         summaries.push(resultText);
       }
@@ -395,7 +459,7 @@ function AgentStudio() {
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-4 p-4">
               {entries.map((entry) => (
-                <AgentRow key={entry.id} entry={entry} />
+                <AgentRow key={entry.id} entry={entry} onSelectResult={selectStockResult} />
               ))}
             </div>
           </ScrollArea>

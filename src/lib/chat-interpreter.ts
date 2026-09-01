@@ -65,6 +65,27 @@ export function interpretRequest(input: string): ToolCall[] {
     ];
   }
 
+  // "Find neon city clips" / "search stock footage for scene 2"
+  const searchMatch =
+    /(search|find|look\s*for)/.test(lower) &&
+    /(stock|clip|footage|b-?roll|video|visual)/.test(lower);
+  if (searchMatch) {
+    const n = lower.match(/scene\s*(\d+)/)?.[1];
+    let query = text
+      .replace(/(search|find|look\s*for)/gi, "")
+      .replace(/(stock|clips?|footage|b-?roll|videos?|visuals?|library)/gi, "")
+      .replace(/for\s*scene\s*\d+/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (!query) query = "cinematic";
+    return [
+      {
+        tool: "search_stock_visual",
+        args: { query, ...(n ? { scene_id: sceneId(n) } : {}) },
+      },
+    ];
+  }
+
   // "Show me the project." / "preview the project"
   if (/(preview)/.test(lower)) {
     return [{ tool: "preview_project", args: {} }];
