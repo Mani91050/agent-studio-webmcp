@@ -13,7 +13,7 @@ import {
   Play,
   Plus,
   Search,
-  Sparkles,
+  SendHorizonal,
   User,
   Wrench,
 } from "lucide-react";
@@ -54,19 +54,23 @@ function formatDuration(seconds: number) {
 function statusBadge(status: string) {
   if (status === "rendering") {
     return (
-      <Badge className="gap-1 border-amber/40 bg-amber/10 text-amber hover:bg-amber/10">
-        <Loader2 className="size-3 animate-spin" /> Rendering
-      </Badge>
+      <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider text-amber">
+        <Loader2 className="size-2.5 animate-spin" /> Rendering
+      </span>
     );
   }
   if (status === "rendered") {
     return (
-      <Badge className="gap-1 border-success/40 bg-success/10 text-success hover:bg-success/10">
-        <CheckCircle2 className="size-3" /> Rendered
-      </Badge>
+      <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider text-success">
+        <CheckCircle2 className="size-2.5" /> Rendered
+      </span>
     );
   }
-  return <Badge variant="secondary">Draft</Badge>;
+  return (
+    <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+      Draft
+    </span>
+  );
 }
 
 function AgentRow({
@@ -78,85 +82,89 @@ function AgentRow({
 }) {
   const isUser = entry.author === "user";
   return (
-    <div className={cn("flex w-full min-w-0 gap-3", isUser && "flex-row-reverse")}>
-      <div
-        className={cn(
-          "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-border",
-          isUser ? "bg-secondary" : "bg-teal/15 text-teal",
-        )}
-      >
-        {isUser ? <User className="size-3.5" /> : <Bot className="size-3.5" />}
-      </div>
-      <div className={cn("min-w-0 max-w-[85%]", isUser && "items-end text-right")}>
-        {entry.type === "tool" ? (
-          <div className="rounded-lg border border-border bg-panel-raised px-3 py-2">
-            <div className="flex items-center gap-2 font-mono text-[11px] text-teal">
-              <Wrench className="size-3" />
-              {entry.toolName}
-              {entry.source === "webmcp" && (
-                <span className="rounded bg-teal/15 px-1 py-px text-[9px] uppercase tracking-wide text-teal">
-                  WebMCP
-                </span>
-              )}
-              {entry.toolStatus === "running" ? (
-                <Loader2 className="size-3 animate-spin text-amber" />
-              ) : (
-                <CheckCircle2 className="size-3 text-success" />
-              )}
-            </div>
-            <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
-              {entry.text}
-            </p>
-            {entry.results && entry.results.length > 0 && (
-              <div className="mt-2 flex flex-col gap-2">
-                {entry.results.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center gap-2 rounded-md border border-border bg-panel p-1.5"
-                  >
-                    <img
-                      src={r.thumbnail}
-                      alt={r.title}
-                      width={96}
-                      height={54}
-                      loading="lazy"
-                      className="h-12 w-20 shrink-0 rounded object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-medium text-foreground">{r.title}</p>
-                      <p className="font-mono text-[10px] text-muted-foreground">
-                        {r.duration}s · {r.resolution}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-6 shrink-0 px-2 text-[10px]"
-                      onClick={() => onSelectResult(entry.sceneId ?? null, r)}
-                    >
-                      Select
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div
-            className={cn(
-              "whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm leading-relaxed",
-              isUser
-                ? "bg-teal text-teal-foreground"
-                : "border border-border bg-panel-raised text-foreground",
-            )}
-          >
-            {entry.text}
-          </div>
-        )}
-        <span className="mt-1 block font-mono text-[10px] text-muted-foreground/70">
-          {entry.time}
+    <div className={cn("flex w-full min-w-0 flex-col gap-1.5", isUser && "items-end")}>
+      <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex size-5 shrink-0 items-center justify-center rounded-full border border-border",
+            isUser ? "bg-secondary" : "bg-panel-raised",
+          )}
+        >
+          {isUser ? (
+            <User className="size-2.5 text-muted-foreground" />
+          ) : (
+            <Bot className="size-2.5 text-primary" />
+          )}
+        </div>
+        <span className="text-[10px] font-medium text-muted-foreground">
+          {isUser ? "You" : "Agent"}
         </span>
+        <span className="font-mono text-[9px] text-muted-foreground/60">{entry.time}</span>
       </div>
+      {entry.type === "tool" ? (
+        <div className="w-full max-w-full rounded-lg border border-border bg-panel-raised px-3 py-2">
+          <div className="flex items-center gap-2 font-mono text-[11px] text-primary">
+            <Wrench className="size-3" />
+            {entry.toolName}
+            {entry.source === "webmcp" && (
+              <span className="rounded bg-primary/15 px-1 py-px text-[9px] uppercase tracking-wide text-primary">
+                WebMCP
+              </span>
+            )}
+            {entry.toolStatus === "running" ? (
+              <Loader2 className="size-3 animate-spin text-amber" />
+            ) : (
+              <CheckCircle2 className="size-3 text-success" />
+            )}
+          </div>
+          <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
+            {entry.text}
+          </p>
+          {entry.results && entry.results.length > 0 && (
+            <div className="mt-2 flex flex-col gap-2">
+              {entry.results.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center gap-2 overflow-hidden rounded-md border border-border bg-panel"
+                >
+                  <img
+                    src={r.thumbnail}
+                    alt={r.title}
+                    width={96}
+                    height={54}
+                    loading="lazy"
+                    className="aspect-video w-20 shrink-0 object-cover"
+                  />
+                  <div className="min-w-0 flex-1 py-1.5">
+                    <p className="truncate text-[11px] font-medium text-foreground">{r.title}</p>
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                      {r.duration}s · {r.resolution}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="mr-2 h-6 shrink-0 rounded bg-primary px-2 text-[10px] font-medium text-primary-foreground hover:bg-primary/90"
+                    onClick={() => onSelectResult(entry.sceneId ?? null, r)}
+                  >
+                    Select
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-xs leading-relaxed",
+            isUser
+              ? "rounded-tr-none border border-primary/20 bg-primary/10 text-foreground"
+              : "rounded-tl-none border border-border bg-panel-raised text-secondary-foreground",
+          )}
+        >
+          {entry.text}
+        </div>
+      )}
     </div>
   );
 }
@@ -255,7 +263,6 @@ function AgentStudio() {
 
     setPendingVisual(null);
   }, [pendingVisual, logToolCall]);
-
 
   const runTool = async (tool: string, args: Record<string, unknown> = {}) => {
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -366,48 +373,46 @@ function AgentStudio() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Top bar */}
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-panel px-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-teal text-teal-foreground">
+      {/* Top header */}
+      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded bg-primary font-bold text-primary-foreground shadow-lg shadow-primary/20">
             <Clapperboard className="size-4" />
           </div>
-          <span className="font-display text-base font-semibold tracking-tight">
-            Agent Studio
-          </span>
+          <div className="flex min-w-0 flex-col">
+            <h1 className="font-display text-sm font-semibold leading-none tracking-tight">
+              Agent Studio
+            </h1>
+            <span className="mt-1 truncate text-[10px] text-muted-foreground">
+              Neon District — Teaser Cut · {totalDuration}s · 9:16
+            </span>
+          </div>
         </div>
-        <div className="mx-2 h-5 w-px bg-border" />
-        <span className="truncate text-sm text-muted-foreground">
-          Neon District — Teaser Cut
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="hidden font-mono text-xs text-muted-foreground sm:block">
-            {totalDuration}s · 9:16
-          </span>
-          <Button
-            size="sm"
-            className="bg-teal text-teal-foreground hover:bg-teal/90"
-            onClick={() => void runTool("preview_project")}
-          >
-            <Play className="size-3.5" /> Preview
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          className="shrink-0 rounded bg-primary text-xs font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+          onClick={() => void runTool("preview_project")}
+        >
+          <Play className="size-3.5" /> Preview
+        </Button>
       </header>
 
       {/* Main workspace */}
-      <main className="grid flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[280px_minmax(0,1fr)_340px]">
-        {/* Left: scene timeline */}
-        <section
+      <main className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* Left: storyline */}
+        <aside
           aria-label="Scenes"
-          className="flex flex-col rounded-xl border border-border bg-panel"
+          className="flex shrink-0 flex-col border-b border-border bg-panel/50 lg:w-64 lg:border-b-0 lg:border-r"
         >
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h2 className="font-display text-sm font-semibold">Scenes</h2>
-            <Badge variant="secondary" className="font-mono">
+          <div className="flex items-center justify-between px-3 pt-3">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Storyline
+            </span>
+            <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[9px]">
               {scenes.length}
             </Badge>
           </div>
-          <div className="flex gap-3 overflow-x-auto p-3 lg:flex-col lg:overflow-visible">
+          <div className="flex gap-3 overflow-x-auto p-3 lg:flex-1 lg:flex-col lg:overflow-y-auto">
             {scenes.map((scene) => {
               const active = scene.id === selected.id;
               return (
@@ -415,13 +420,18 @@ function AgentStudio() {
                   key={scene.id}
                   onClick={() => setSelectedId(scene.id)}
                   className={cn(
-                    "group w-56 shrink-0 rounded-lg border p-2 text-left transition-colors lg:w-full",
-                    active
-                      ? "border-teal/60 bg-accent"
-                      : "border-border bg-panel-raised hover:border-input",
+                    "group w-40 shrink-0 cursor-pointer text-left transition-opacity lg:w-full",
+                    !active && "opacity-60 hover:opacity-100",
                   )}
                 >
-                  <div className="relative overflow-hidden rounded-md">
+                  <div
+                    className={cn(
+                      "relative overflow-hidden rounded-lg bg-secondary transition-all",
+                      active
+                        ? "border-2 border-primary shadow-xl ring-4 ring-primary/10"
+                        : "border border-border group-hover:border-muted-foreground/40",
+                    )}
+                  >
                     <img
                       src={scene.thumbnail}
                       alt={`${scene.title} thumbnail`}
@@ -430,19 +440,34 @@ function AgentStudio() {
                       loading="lazy"
                       className="aspect-video w-full object-cover"
                     />
-                    <span className="absolute left-1.5 top-1.5 rounded bg-background/80 px-1.5 py-0.5 font-mono text-[10px] text-foreground">
-                      S{scene.index}
-                    </span>
-                    <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded bg-background/80 px-1.5 py-0.5 font-mono text-[10px] text-foreground">
-                      <Clock className="size-2.5" /> {scene.duration}s
-                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          "flex size-4 items-center justify-center rounded-full text-[10px] font-semibold",
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-black/60 text-foreground",
+                        )}
+                      >
+                        {scene.index}
+                      </span>
+                      <span className="flex items-center gap-1 font-mono text-[10px] text-white/90">
+                        <Clock className="size-2.5" /> {scene.duration}s
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-2 px-0.5 pb-0.5">
+                  <div className="mt-1.5 flex items-center justify-between gap-2 px-0.5">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{scene.title}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {scene.caption}
+                      <p
+                        className={cn(
+                          "truncate text-[11px] font-medium",
+                          active ? "text-primary" : "text-foreground",
+                        )}
+                      >
+                        {active ? `${scene.title} — Selected` : scene.title}
                       </p>
+                      <p className="truncate text-[10px] text-muted-foreground">{scene.caption}</p>
                     </div>
                     {statusBadge(scene.status)}
                   </div>
@@ -450,77 +475,111 @@ function AgentStudio() {
               );
             })}
           </div>
-        </section>
+        </aside>
 
-        {/* Center: 9:16 preview */}
+        {/* Center: 9:16 preview + transport */}
         <section
           aria-label="Video preview"
-          className="flex min-h-[520px] items-center justify-center rounded-xl border border-border bg-panel p-4"
+          className="flex min-h-[520px] flex-1 flex-col bg-secondary/30"
         >
-          <div className="relative h-full max-h-[calc(100vh-220px)] min-h-[420px] w-auto overflow-hidden rounded-xl border border-border shadow-2xl shadow-black/50" style={{ aspectRatio: "9 / 16" }}>
-            <img
-              src={selected.thumbnail}
-              alt={`Preview of ${selected.title}`}
-              className="absolute inset-0 size-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
-            <div className="absolute left-3 top-3 flex items-center gap-2">
-              <Badge variant="secondary" className="bg-background/70 font-mono text-[10px]">
-                Scene {selected.index} / {scenes.length}
-              </Badge>
-            </div>
-            <div className="absolute inset-x-4 bottom-10 text-center">
-              <p className="font-display text-lg font-semibold leading-snug text-white drop-shadow">
-                {selected.caption}
-              </p>
-            </div>
-            <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-black/50 px-3 py-2 backdrop-blur-sm">
-              <Play className="size-3.5 text-white" />
-              <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
-                <div
-                  className="h-full rounded-full bg-teal"
-                  style={{ width: `${(selected.index / scenes.length) * 100}%` }}
-                />
+          <div className="flex flex-1 items-center justify-center p-6 lg:p-8">
+            <div
+              className="relative h-full max-h-[calc(100vh-260px)] min-h-[420px] w-auto overflow-hidden rounded-xl border border-border bg-black shadow-2xl"
+              style={{ aspectRatio: "9 / 16" }}
+            >
+              <img
+                src={selected.thumbnail}
+                alt={`Preview of ${selected.title}`}
+                className="absolute inset-0 size-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+              <div className="absolute left-4 right-4 top-4 flex justify-between">
+                <span className="rounded bg-black/40 px-2 py-1 font-mono text-[10px] text-white/80 backdrop-blur-md">
+                  Scene {selected.index} / {scenes.length}
+                </span>
               </div>
-              <span className="font-mono text-[10px] text-white/80">
-                {formatDuration(selected.duration)}
-              </span>
+              <div className="absolute inset-x-6 bottom-16 text-center">
+                <p className="font-display text-lg font-semibold leading-snug text-white drop-shadow-md">
+                  {selected.caption}
+                </p>
+              </div>
+              <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/80 to-transparent px-4 pb-3 pt-8">
+                <Play className="size-3.5 shrink-0 text-white" />
+                <div className="relative h-1 flex-1 overflow-visible rounded-full bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${(selected.index / scenes.length) * 100}%` }}
+                  />
+                  <div
+                    className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-white shadow-lg"
+                    style={{ left: `${(selected.index / scenes.length) * 100}%` }}
+                  />
+                </div>
+                <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/80">
+                  {formatDuration(selected.duration)}
+                </span>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Right: AI agent panel */}
-        <section
+        <aside
           aria-label="AI agent"
-          className="flex min-h-[360px] flex-col rounded-xl border border-border bg-panel"
+          className="flex min-h-[360px] shrink-0 flex-col border-t border-border bg-panel/50 lg:w-80 lg:border-l lg:border-t-0"
         >
-          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <Sparkles className="size-4 text-teal" />
-            <h2 className="font-display text-sm font-semibold">Agent</h2>
-            <Badge className="ml-auto gap-1 border-success/40 bg-success/10 text-success hover:bg-success/10">
-              <span className="size-1.5 animate-pulse rounded-full bg-success" />
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+            <span className="size-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+            <h2 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              AI Agent
+            </h2>
+            <span className="ml-auto font-mono text-[9px] uppercase tracking-wider text-success">
               Working
-            </Badge>
+            </span>
           </div>
+
+          {/* WebMCP tool controls */}
+          <div
+            className="grid grid-cols-7 gap-1 border-b border-border p-2"
+            aria-label="WebMCP agent controls"
+          >
+            {agentControls.map((ctl) => (
+              <button
+                key={ctl.label}
+                type="button"
+                title={ctl.label}
+                aria-label={ctl.label}
+                onClick={() => void ctl.run()}
+                className="flex aspect-square items-center justify-center rounded bg-secondary text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <ctl.icon className="size-3.5" />
+              </button>
+            ))}
+          </div>
+
           {pendingVisual && (
             <div className="border-b border-border p-3">
-              <div className="rounded-lg border border-border bg-muted/30 p-3">
-                <p className="text-sm font-medium">Agent proposes a visual change</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Replace scene {pendingVisual.sceneId} with "{pendingVisual.result.title}"?
-                </p>
-                <div className="mt-3 flex gap-2">
+              <div className="space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/20">
+                    <ImageIcon className="size-3.5 text-primary" />
+                  </div>
+                  <p className="text-xs font-medium leading-normal text-secondary-foreground">
+                    Replace scene {pendingVisual.sceneId} with "{pendingVisual.result.title}"?
+                  </p>
+                </div>
+                <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={approveVisual}
-                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+                    className="flex-1 rounded-lg bg-primary py-2 text-[10px] font-bold uppercase tracking-wide text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:bg-primary/90"
                   >
                     Approve
                   </button>
                   <button
                     type="button"
                     onClick={rejectVisual}
-                    className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
+                    className="flex-1 rounded-lg border border-border bg-secondary py-2 text-[10px] font-bold uppercase tracking-wide text-secondary-foreground transition-all hover:bg-muted"
                   >
                     Reject
                   </button>
@@ -529,21 +588,6 @@ function AgentStudio() {
             </div>
           )}
 
-          <div className="flex flex-wrap gap-1.5 border-b border-border px-3 py-2" aria-label="WebMCP agent controls">
-            {agentControls.map((ctl) => (
-              <Button
-                key={ctl.label}
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1 px-2 font-mono text-[10px]"
-                title={`Run WebMCP tool`}
-                onClick={() => void ctl.run()}
-              >
-                <ctl.icon className="size-3 text-teal" />
-                {ctl.label}
-              </Button>
-            ))}
-          </div>
           <ScrollArea className="flex-1 [&>div>div]:!block">
             <div className="flex flex-col gap-4 p-4">
               {entries.map((entry) => (
@@ -551,86 +595,90 @@ function AgentStudio() {
               ))}
             </div>
           </ScrollArea>
-          <div className="border-t border-border p-3">
-            <div className="flex items-center gap-2 rounded-lg border border-input bg-panel-raised px-3 py-2">
-              <MessageSquareText className="size-4 text-muted-foreground" />
+
+          {/* Composer */}
+          <div className="border-t border-border p-4">
+            <div className="relative">
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void sendMessage();
                 }}
-                placeholder="Ask the agent to adjust a scene…"
+                placeholder="Message AI Agent…"
                 aria-label="Message the agent"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="w-full rounded-lg border border-border bg-secondary py-2.5 pl-3 pr-10 text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60"
               />
-              <Button
-                size="sm"
-                className="bg-teal text-teal-foreground hover:bg-teal/90"
+              <button
+                type="button"
+                aria-label="Send message"
                 onClick={() => void sendMessage()}
+                className="absolute right-1.5 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Send
-              </Button>
+                <SendHorizonal className="size-3.5" />
+              </button>
             </div>
           </div>
-        </section>
+        </aside>
       </main>
 
-      {/* Bottom: scene controls */}
-      <footer className="shrink-0 border-t border-border bg-panel px-4 py-3">
-        <div className="mx-auto flex max-w-4xl flex-col gap-3 md:flex-row md:items-center md:gap-6">
-          <div className="flex items-center gap-2 md:w-40">
-            <span className="font-mono text-[10px] text-muted-foreground">
-              S{selected.index}
-            </span>
-            <span className="truncate text-sm font-medium">{selected.title}</span>
-          </div>
-          <div className="flex flex-1 items-center gap-2">
-            <label htmlFor="caption" className="sr-only">
-              Caption
-            </label>
-            <input
-              id="caption"
-              value={selected.caption}
-              onChange={(e) => updateSelected({ caption: e.target.value })}
-              className="w-full rounded-md border border-input bg-panel-raised px-3 py-1.5 text-sm outline-none focus:border-ring"
-            />
-          </div>
-          <div className="flex items-center gap-3 md:w-72">
-            <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
-              {selected.duration}s
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-7"
-              onClick={() =>
-                updateSelected({ duration: Math.max(1, selected.duration - 1) })
-              }
-              aria-label="Decrease duration"
-            >
-              <Minus className="size-3" />
-            </Button>
-            <Slider
-              value={[selected.duration]}
-              min={1}
-              max={12}
-              step={1}
-              onValueChange={([v]) => updateSelected({ duration: v ?? selected.duration })}
-              className="flex-1"
-              aria-label="Scene duration"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-7"
-              onClick={() =>
-                updateSelected({ duration: Math.min(12, selected.duration + 1) })
-              }
-              aria-label="Increase duration"
-            >
-              <Plus className="size-3" />
-            </Button>
+      {/* Bottom: scene editor bar */}
+      <footer className="flex h-auto shrink-0 flex-col gap-3 border-t border-border bg-background px-4 py-3 md:h-16 md:flex-row md:items-center md:gap-6 md:py-0">
+        <div className="flex min-w-0 items-center gap-2 md:w-44">
+          <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+            S{selected.index}
+          </span>
+          <span className="truncate text-xs font-medium">{selected.title}</span>
+        </div>
+        <div className="flex flex-1 items-center gap-3 rounded-lg border border-border bg-panel px-3 py-1.5">
+          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Caption
+          </span>
+          <label htmlFor="caption" className="sr-only">
+            Caption
+          </label>
+          <input
+            id="caption"
+            value={selected.caption}
+            onChange={(e) => updateSelected({ caption: e.target.value })}
+            className="w-full bg-transparent text-xs text-secondary-foreground outline-none"
+          />
+        </div>
+        <div className="flex items-center gap-4 md:w-72">
+          <div className="flex w-full flex-col gap-1">
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span className="font-bold uppercase tracking-wider">Duration</span>
+              <span className="font-mono tabular-nums text-foreground">{selected.duration}s</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-6 shrink-0 rounded"
+                onClick={() => updateSelected({ duration: Math.max(1, selected.duration - 1) })}
+                aria-label="Decrease duration"
+              >
+                <Minus className="size-3" />
+              </Button>
+              <Slider
+                value={[selected.duration]}
+                min={1}
+                max={12}
+                step={1}
+                onValueChange={([v]) => updateSelected({ duration: v ?? selected.duration })}
+                className="flex-1"
+                aria-label="Scene duration"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-6 shrink-0 rounded"
+                onClick={() => updateSelected({ duration: Math.min(12, selected.duration + 1) })}
+                aria-label="Increase duration"
+              >
+                <Plus className="size-3" />
+              </Button>
+            </div>
           </div>
         </div>
       </footer>
