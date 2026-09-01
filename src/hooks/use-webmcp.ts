@@ -129,9 +129,9 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
         execute: async (args) => {
           const scene = findScene(args["scene_id"]);
           if (!scene) return textResult(`Scene not found: ${String(args["scene_id"])}`, true);
-          let url = typeof args["image_url"] === "string" ? args["image_url"] : "";
-          if (url && !/^https:\/\//.test(url)) {
-            return textResult("image_url must be an https URL", true);
+          let url = typeof args["image_url"] === "string" ? args["image_url"].trim() : "";
+          if (url && !/^(https:\/\/|\/|data:image\/)/.test(url)) {
+            return textResult("image_url must be an https URL or an in-app asset path", true);
           }
           if (!url) {
             const i = FALLBACK_VISUALS.indexOf(scene.thumbnail);
