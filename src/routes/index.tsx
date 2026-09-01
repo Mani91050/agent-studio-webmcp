@@ -317,7 +317,7 @@ function AgentStudio() {
               min={1}
               max={12}
               step={1}
-              onValueChange={([v]) => updateSelected({ duration: v })}
+              onValueChange={([v]) => updateSelected({ duration: v ?? selected.duration })}
               className="flex-1"
               aria-label="Scene duration"
             />
