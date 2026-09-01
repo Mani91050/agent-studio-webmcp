@@ -60,10 +60,10 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
           properties: { scene_id: { type: "string", description: "Scene id or number; optional." } },
         },
         execute: async (args) => {
-          const scene = findScene(args.scene_id);
+          const scene = findScene(args["scene_id"]);
           if (!scene) {
-            logToolCall("get_scene", `Scene not found for "${String(args.scene_id)}".`);
-            return textResult(`Scene not found: ${String(args.scene_id)}`, true);
+            logToolCall("get_scene", `Scene not found for "${String(args["scene_id"])}".`);
+            return textResult(`Scene not found: ${String(args["scene_id"])}`, true);
           }
           logToolCall("get_scene", `Read scene ${scene.index} "${scene.title}".`);
           return jsonResult(sceneView(scene));
@@ -81,9 +81,9 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
           required: ["caption"],
         },
         execute: async (args) => {
-          const scene = findScene(args.scene_id);
-          const caption = typeof args.caption === "string" ? args.caption.trim() : "";
-          if (!scene) return textResult(`Scene not found: ${String(args.scene_id)}`, true);
+          const scene = findScene(args["scene_id"]);
+          const caption = typeof args["caption"] === "string" ? args["caption"].trim() : "";
+          if (!scene) return textResult(`Scene not found: ${String(args["scene_id"])}`, true);
           if (!caption) return textResult("caption must be a non-empty string", true);
           updateScene(scene.id, { caption });
           logToolCall("update_caption", `Scene ${scene.index} caption → "${caption}".`);
@@ -102,9 +102,9 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
           required: ["duration"],
         },
         execute: async (args) => {
-          const scene = findScene(args.scene_id);
-          const duration = typeof args.duration === "number" ? args.duration : Number(args.duration);
-          if (!scene) return textResult(`Scene not found: ${String(args.scene_id)}`, true);
+          const scene = findScene(args["scene_id"]);
+          const duration = typeof args["duration"] === "number" ? args["duration"] : Number(args["duration"]);
+          if (!scene) return textResult(`Scene not found: ${String(args["scene_id"])}`, true);
           if (!Number.isFinite(duration)) return textResult("duration must be a number", true);
           const clamped = Math.min(12, Math.max(1, Math.round(duration)));
           updateScene(scene.id, { duration: clamped });
@@ -123,9 +123,9 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
           },
         },
         execute: async (args) => {
-          const scene = findScene(args.scene_id);
-          if (!scene) return textResult(`Scene not found: ${String(args.scene_id)}`, true);
-          let url = typeof args.image_url === "string" ? args.image_url : "";
+          const scene = findScene(args["scene_id"]);
+          if (!scene) return textResult(`Scene not found: ${String(args["scene_id"])}`, true);
+          let url = typeof args["image_url"] === "string" ? args["image_url"] : "";
           if (url && !/^https:\/\//.test(url)) {
             return textResult("image_url must be an https URL", true);
           }
