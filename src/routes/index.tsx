@@ -271,14 +271,26 @@ function PreviewPlayer({
           className="relative mx-auto h-[58vh] max-h-[560px] w-auto overflow-hidden rounded-lg border border-border bg-black"
           style={{ aspectRatio: "9 / 16" }}
         >
-          {scene && (
-            <img
-              key={scene.id}
-              src={scene.thumbnail}
-              alt={`Preview of ${scene.title}`}
-              className="absolute inset-0 size-full object-cover"
-            />
-          )}
+          {scene &&
+            (scene.videoUrl ? (
+              <video
+                key={`${scene.id}-video`}
+                src={scene.videoUrl}
+                poster={scene.thumbnail}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 size-full object-cover"
+              />
+            ) : (
+              <img
+                key={scene.id}
+                src={scene.thumbnail}
+                alt={`Preview of ${scene.title}`}
+                className="absolute inset-0 size-full object-cover"
+              />
+            ))}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
           <div className="absolute left-3 right-3 top-3 flex justify-between">
             <span className="rounded bg-black/40 px-2 py-1 font-mono text-[10px] text-white/80 backdrop-blur-md">
@@ -349,6 +361,9 @@ function PreviewPlayer({
   );
 }
 
+const isVideoUrl = (url: string) =>
+  /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url) || url.startsWith("data:video/");
+
 function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
@@ -367,7 +382,7 @@ function AgentStudio() {
   );
 
   const updateScene = useCallback(
-    (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail">>) => {
+    (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail" | "videoUrl">>) => {
       setScenes((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
     },
     [],
@@ -402,7 +417,11 @@ function AgentStudio() {
     (sceneId: string | null, result: StockResult) => {
       const targetId = sceneId ?? selectedId;
       const isImage = /\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(result.url) || result.url.startsWith("data:image/");
-      updateScene(targetId, { thumbnail: isImage ? result.url : result.thumbnail });
+      const isVideo = isVideoUrl(result.url);
+      updateScene(targetId, {
+        thumbnail: isImage ? result.url : result.thumbnail,
+        videoUrl: isVideo ? result.url : null,
+      });
       logToolCall("replace_scene_visual", `Applied "${result.title}" to the scene.`, {
         sceneId: targetId,
       });
@@ -429,13 +448,14 @@ function AgentStudio() {
         { sceneId },
       );
     } else {
+      updateScene(sceneId, { videoUrl: isVideoUrl(result.url) ? result.url : null });
       logToolCall("replace_scene_visual", `Approved "${result.title}" for scene ${sceneId}.`, {
         sceneId,
       });
     }
 
     setPendingVisual(null);
-  }, [pendingVisual, logToolCall]);
+  }, [pendingVisual, logToolCall, updateScene]);
 
   const rejectVisual = useCallback(() => {
     if (!pendingVisual) return;
@@ -724,11 +744,24 @@ function AgentStudio() {
               className="relative h-full max-h-[calc(100vh-260px)] min-h-[420px] w-auto overflow-hidden rounded-xl border border-border bg-black shadow-2xl"
               style={{ aspectRatio: "9 / 16" }}
             >
-              <img
-                src={selected.thumbnail}
-                alt={`Preview of ${selected.title}`}
-                className="absolute inset-0 size-full object-cover"
-              />
+              {selected.videoUrl ? (
+                <video
+                  key={selected.videoUrl}
+                  src={selected.videoUrl}
+                  poster={selected.thumbnail}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 size-full object-cover"
+                />
+              ) : (
+                <img
+                  src={selected.thumbnail}
+                  alt={`Preview of ${selected.title}`}
+                  className="absolute inset-0 size-full object-cover"
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
               <div className="absolute left-4 right-4 top-4 flex justify-between">
                 <span className="rounded bg-black/40 px-2 py-1 font-mono text-[10px] text-white/80 backdrop-blur-md">
