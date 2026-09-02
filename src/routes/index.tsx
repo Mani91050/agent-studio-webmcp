@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bot,
   CheckCircle2,
@@ -10,7 +10,10 @@ import {
   Loader2,
   MessageSquareText,
   Minus,
+  Pause,
   Play,
+  SkipBack,
+  SkipForward,
   Plus,
   Search,
   SendHorizonal,
@@ -25,6 +28,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -169,11 +178,183 @@ function AgentRow({
   );
 }
 
+function PreviewPlayer({
+  open,
+  onOpenChange,
+  scenes,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  scenes: Scene[];
+}) {
+  const [position, setPosition] = useState(0); // seconds across the whole timeline
+  const [playing, setPlaying] = useState(true);
+
+  const total = useMemo(() => scenes.reduce((a, s) => a + s.duration, 0), [scenes]);
+  const starts = useMemo(() => {
+    const acc: number[] = [];
+    let t = 0;
+    for (const s of scenes) {
+      acc.push(t);
+      t += s.duration;
+    }
+    return acc;
+  }, [scenes]);
+
+  // Derive the current scene from overall playback position.
+  let index = scenes.length - 1;
+  for (let i = 0; i < scenes.length; i++) {
+    if (position < (starts[i] ?? 0) + (scenes[i]?.duration ?? 0)) {
+      index = i;
+      break;
+    }
+  }
+  const scene = scenes[index];
+  const sceneElapsed = Math.max(0, position - (starts[index] ?? 0));
+
+  // Reset playback whenever the modal opens.
+  useEffect(() => {
+    if (open) {
+      setPosition(0);
+      setPlaying(true);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !playing || total <= 0) return;
+    const tick = setInterval(() => {
+      setPosition((p) => {
+        const next = p + 0.1;
+        if (next >= total) {
+          setPlaying(false);
+          return total;
+        }
+        return next;
+      });
+    }, 100);
+    return () => clearInterval(tick);
+  }, [open, playing, total]);
+
+  const jumpToScene = (i: number) => {
+    if (i < 0 || i >= scenes.length) return;
+    setPosition(starts[i] ?? 0);
+    setPlaying(true);
+  };
+
+  const replay = () => {
+    setPosition(0);
+    setPlaying(true);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="flex max-h-[92vh] w-auto max-w-[94vw] flex-col gap-3 overflow-hidden border-border bg-panel p-4 sm:max-w-md"
+        aria-label="Project preview player"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <DialogTitle className="font-display text-sm font-semibold tracking-tight">
+              Neon District — Teaser Cut
+            </DialogTitle>
+            <DialogDescription className="mt-0.5 text-[11px] text-muted-foreground">
+              9:16 preview · {formatDuration(position)} / {formatDuration(total)}
+            </DialogDescription>
+          </div>
+          <Badge variant="secondary" className="h-4 shrink-0 px-1.5 font-mono text-[9px]">
+            {scenes.length} SCENES
+          </Badge>
+        </div>
+
+        {/* 9:16 stage */}
+        <div
+          className="relative mx-auto h-[58vh] max-h-[560px] w-auto overflow-hidden rounded-lg border border-border bg-black"
+          style={{ aspectRatio: "9 / 16" }}
+        >
+          {scene && (
+            <img
+              key={scene.id}
+              src={scene.thumbnail}
+              alt={`Preview of ${scene.title}`}
+              className="absolute inset-0 size-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+          <div className="absolute left-3 right-3 top-3 flex justify-between">
+            <span className="rounded bg-black/40 px-2 py-1 font-mono text-[10px] text-white/80 backdrop-blur-md">
+              Scene {(scene?.index ?? 0)} / {scenes.length}
+            </span>
+            <span className="rounded bg-black/40 px-2 py-1 font-mono text-[10px] text-white/80 backdrop-blur-md">
+              {scene?.title}
+            </span>
+          </div>
+          <div className="absolute inset-x-5 bottom-12 text-center">
+            <p className="font-display text-base font-semibold leading-snug text-white drop-shadow-md">
+              {scene?.caption}
+            </p>
+          </div>
+          {/* overall progress */}
+          <div className="absolute inset-x-3 bottom-3 flex gap-1">
+            {scenes.map((s, i) => {
+              const start = starts[i] ?? 0;
+              const pct =
+                total <= 0
+                  ? 0
+                  : Math.min(1, Math.max(0, (position - start) / Math.max(0.001, s.duration)));
+              return (
+                <div key={s.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-primary transition-[width] duration-100"
+                    style={{ width: `${pct * 100}%` }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* transport */}
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 rounded"
+            onClick={() => jumpToScene(index - 1)}
+            disabled={index <= 0}
+            aria-label="Previous scene"
+          >
+            <SkipBack className="size-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            className="size-9 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => (playing ? setPlaying(false) : position >= total ? replay() : setPlaying(true))}
+            aria-label={playing ? "Pause preview" : "Play preview"}
+          >
+            {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 rounded"
+            onClick={() => jumpToScene(index + 1)}
+            disabled={index >= scenes.length - 1}
+            aria-label="Next scene"
+          >
+            <SkipForward className="size-3.5" />
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AgentStudio() {
   const [scenes, setScenes] = useState(initialScenes);
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
   const [entries, setEntries] = useState<AgentEntry[]>(agentActivity);
   const [draft, setDraft] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [pendingVisual, setPendingVisual] = useState<{
     sceneId: string;
     result: StockResult;
@@ -447,7 +628,7 @@ function AgentStudio() {
         <Button
           size="sm"
           className="shrink-0 rounded bg-primary text-xs font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
-          onClick={() => void runTool("preview_project")}
+          onClick={() => setPreviewOpen(true)}
         >
           <Play className="size-3.5" /> Preview
         </Button>
@@ -738,6 +919,8 @@ function AgentStudio() {
           </div>
         </div>
       </footer>
+
+      <PreviewPlayer open={previewOpen} onOpenChange={setPreviewOpen} scenes={scenes} />
     </div>
   );
 }
