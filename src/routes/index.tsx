@@ -354,6 +354,7 @@ function AgentStudio() {
   const [selectedId, setSelectedId] = useState(initialScenes[0]!.id);
   const [entries, setEntries] = useState<AgentEntry[]>(agentActivity);
   const [draft, setDraft] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [pendingVisual, setPendingVisual] = useState<{
     sceneId: string;
     result: StockResult;
@@ -627,7 +628,7 @@ function AgentStudio() {
         <Button
           size="sm"
           className="shrink-0 rounded bg-primary text-xs font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
-          onClick={() => void runTool("preview_project")}
+          onClick={() => setPreviewOpen(true)}
         >
           <Play className="size-3.5" /> Preview
         </Button>
