@@ -382,7 +382,12 @@ function AgentStudio() {
 
     const summaries: string[] = [];
     for (const call of calls) {
-      const result = await window.__agentStudioWebMCP?.call(call.tool, call.args);
+      // replace_scene_visual goes through the Approve/Reject proposal flow —
+      // don't execute the tool directly here.
+      const result =
+        call.tool === "replace_scene_visual"
+          ? undefined
+          : await window.__agentStudioWebMCP?.call(call.tool, call.args);
       const resultText = result?.content?.[0]?.text ?? "";
       if (result?.isError) {
         summaries.push(`⚠️ ${resultText}`);
