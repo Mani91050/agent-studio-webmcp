@@ -919,6 +919,8 @@ function AgentStudio() {
           </div>
         </div>
       </footer>
+
+      <PreviewPlayer open={previewOpen} onOpenChange={setPreviewOpen} scenes={scenes} />
     </div>
   );
 }
