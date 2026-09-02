@@ -342,7 +342,7 @@ function AgentStudio() {
           duration: Math.min(12, selected.duration + 1),
         }),
     },
-    { label: "New visual", icon: ImageIcon, run: () => runTool("replace_scene_visual", { scene_id: selected.id }) },
+    { label: "New visual", icon: ImageIcon, run: () => proposeNewVisual(selected) },
     {
       label: "Search",
       icon: Search,
@@ -391,7 +391,13 @@ function AgentStudio() {
       } else if (call.tool === "change_scene_duration") {
         summaries.push(`Duration set to ${String(call.args["duration"])}s.`);
       } else if (call.tool === "replace_scene_visual") {
-        summaries.push("Scene visual replaced.");
+        // Route visual replacement through the Approve/Reject proposal flow
+        // instead of applying it immediately.
+        const targetScene =
+          scenes.find((s) => s.id === call.args["scene_id"] || String(s.index) === call.args["scene_id"]) ??
+          selected;
+        proposeNewVisual(targetScene);
+        summaries.push(`Proposed a new visual for scene ${targetScene.index}. Waiting for approval.`);
       } else if (call.tool === "search_stock_visual") {
         summaries.push(`Found 3 stock clips for "${String(call.args["query"])}".`);
         try {
