@@ -11,7 +11,7 @@ const PROJECT_NAME = "Neon District — Teaser Cut";
 interface UseWebMCPOptions {
   scenes: Scene[];
   selectedScene: Scene;
-  updateScene: (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail">>) => void;
+  updateScene: (id: string, patch: Partial<Pick<Scene, "caption" | "duration" | "thumbnail" | "videoUrl">>) => void;
   logToolCall: (
     toolName: string,
     text: string,
@@ -137,7 +137,7 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
             const i = FALLBACK_VISUALS.indexOf(scene.thumbnail);
             url = FALLBACK_VISUALS[(i + 1) % FALLBACK_VISUALS.length]!;
           }
-          updateScene(scene.id, { thumbnail: url });
+          updateScene(scene.id, { thumbnail: url, videoUrl: null });
           logToolCall("replace_scene_visual", `Scene ${scene.index} visual replaced.`);
           return jsonResult(sceneView({ ...scene, thumbnail: url }));
         },

@@ -9,6 +9,8 @@ export interface Scene {
   caption: string;
   duration: number; // seconds
   thumbnail: string;
+  /** Playable video source (e.g. an approved Pexels clip); null when the scene is a still. */
+  videoUrl: string | null;
   status: "rendered" | "rendering" | "draft";
 }
 
@@ -20,6 +22,7 @@ export const initialScenes: Scene[] = [
     caption: "Every journey begins in the dark.",
     duration: 4,
     thumbnail: scene1,
+    videoUrl: null,
     status: "rendered",
   },
   {
@@ -29,6 +32,7 @@ export const initialScenes: Scene[] = [
     caption: "One message can change everything.",
     duration: 6,
     thumbnail: scene2,
+    videoUrl: null,
     status: "rendered",
   },
   {
@@ -38,6 +42,7 @@ export const initialScenes: Scene[] = [
     caption: "And then, the way forward.",
     duration: 5,
     thumbnail: scene3,
+    videoUrl: null,
     status: "rendering",
   },
 ];
