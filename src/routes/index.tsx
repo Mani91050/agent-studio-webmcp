@@ -18,7 +18,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { agentActivity, initialScenes, type AgentEntry, type Scene, type StockResult } from "@/lib/mock-data";
-import { useWebMCP } from "@/hooks/use-webmcp";
+import { useWebMCP, FALLBACK_VISUALS } from "@/hooks/use-webmcp";
 import { interpretRequest } from "@/lib/chat-interpreter";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -266,6 +266,32 @@ function AgentStudio() {
     setPendingVisual(null);
   }, [pendingVisual, logToolCall]);
 
+  // Propose the next generated visual for a scene without applying it —
+  // the change only lands if the user approves the proposal.
+  const proposeNewVisual = useCallback(
+    (scene: Scene) => {
+      const i = FALLBACK_VISUALS.indexOf(scene.thumbnail);
+      const url = FALLBACK_VISUALS[(i + 1) % FALLBACK_VISUALS.length]!;
+      setPendingVisual({
+        sceneId: scene.id,
+        result: {
+          id: `generated-${scene.id}`,
+          title: `Generated visual — ${scene.title}`,
+          thumbnail: url,
+          url,
+          duration: scene.duration,
+          resolution: "1080x1920",
+        },
+      });
+      logToolCall(
+        "replace_scene_visual",
+        `Proposed a new generated visual for scene ${scene.index}. Waiting for approval.`,
+        { sceneId: scene.id },
+      );
+    },
+    [logToolCall],
+  );
+
   const runTool = async (tool: string, args: Record<string, unknown> = {}) => {
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const result = await window.__agentStudioWebMCP?.call(tool, args);
@@ -316,7 +342,7 @@ function AgentStudio() {
           duration: Math.min(12, selected.duration + 1),
         }),
     },
-    { label: "New visual", icon: ImageIcon, run: () => runTool("replace_scene_visual", { scene_id: selected.id }) },
+    { label: "New visual", icon: ImageIcon, run: () => proposeNewVisual(selected) },
     {
       label: "Search",
       icon: Search,
@@ -356,7 +382,12 @@ function AgentStudio() {
 
     const summaries: string[] = [];
     for (const call of calls) {
-      const result = await window.__agentStudioWebMCP?.call(call.tool, call.args);
+      // replace_scene_visual goes through the Approve/Reject proposal flow —
+      // don't execute the tool directly here.
+      const result =
+        call.tool === "replace_scene_visual"
+          ? undefined
+          : await window.__agentStudioWebMCP?.call(call.tool, call.args);
       const resultText = result?.content?.[0]?.text ?? "";
       if (result?.isError) {
         summaries.push(`⚠️ ${resultText}`);
@@ -365,7 +396,13 @@ function AgentStudio() {
       } else if (call.tool === "change_scene_duration") {
         summaries.push(`Duration set to ${String(call.args["duration"])}s.`);
       } else if (call.tool === "replace_scene_visual") {
-        summaries.push("Scene visual replaced.");
+        // Route visual replacement through the Approve/Reject proposal flow
+        // instead of applying it immediately.
+        const targetScene =
+          scenes.find((s) => s.id === call.args["scene_id"] || String(s.index) === call.args["scene_id"]) ??
+          selected;
+        proposeNewVisual(targetScene);
+        summaries.push(`Proposed a new visual for scene ${targetScene.index}. Waiting for approval.`);
       } else if (call.tool === "search_stock_visual") {
         summaries.push(`Found 3 stock clips for "${String(call.args["query"])}".`);
         try {
