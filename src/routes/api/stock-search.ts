@@ -1,4 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import scene1 from "@/assets/scene-1.jpg";
+import scene2 from "@/assets/scene-2.jpg";
+import scene3 from "@/assets/scene-3.jpg";
 
 export const Route = createFileRoute("/api/stock-search")({
   server: {
@@ -19,11 +22,7 @@ export const Route = createFileRoute("/api/stock-search")({
         if (!apiKey) {
           // No key configured: fall back to mock results so the search flow
           // stays functional in development.
-          const thumbs = [
-            "/src/assets/scene-1.jpg",
-            "/src/assets/scene-2.jpg",
-            "/src/assets/scene-3.jpg",
-          ];
+          const thumbs = [scene1, scene2, scene3];
           const results = thumbs.map((thumbnail, i) => ({
             id: `mock-${i + 1}`,
             title: `${query} — clip ${i + 1}`,
