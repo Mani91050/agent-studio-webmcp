@@ -5,7 +5,7 @@ import scene3 from "@/assets/scene-3.jpg";
 import type { Scene, StockResult } from "@/lib/mock-data";
 import { registerWebMCPTools, jsonResult, textResult, type WebMCPTool } from "@/lib/webmcp";
 
-const FALLBACK_VISUALS = [scene1, scene2, scene3];
+export const FALLBACK_VISUALS = [scene1, scene2, scene3];
 const PROJECT_NAME = "Neon District — Teaser Cut";
 
 interface UseWebMCPOptions {
