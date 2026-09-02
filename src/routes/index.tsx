@@ -18,7 +18,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { agentActivity, initialScenes, type AgentEntry, type Scene, type StockResult } from "@/lib/mock-data";
-import { useWebMCP } from "@/hooks/use-webmcp";
+import { useWebMCP, FALLBACK_VISUALS } from "@/hooks/use-webmcp";
 import { interpretRequest } from "@/lib/chat-interpreter";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -265,6 +265,32 @@ function AgentStudio() {
 
     setPendingVisual(null);
   }, [pendingVisual, logToolCall]);
+
+  // Propose the next generated visual for a scene without applying it —
+  // the change only lands if the user approves the proposal.
+  const proposeNewVisual = useCallback(
+    (scene: Scene) => {
+      const i = FALLBACK_VISUALS.indexOf(scene.thumbnail);
+      const url = FALLBACK_VISUALS[(i + 1) % FALLBACK_VISUALS.length]!;
+      setPendingVisual({
+        sceneId: scene.id,
+        result: {
+          id: `generated-${scene.id}`,
+          title: `Generated visual — ${scene.title}`,
+          thumbnail: url,
+          url,
+          duration: scene.duration,
+          resolution: "1080x1920",
+        },
+      });
+      logToolCall(
+        "replace_scene_visual",
+        `Proposed a new generated visual for scene ${scene.index}. Waiting for approval.`,
+        { sceneId: scene.id },
+      );
+    },
+    [logToolCall],
+  );
 
   const runTool = async (tool: string, args: Record<string, unknown> = {}) => {
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
