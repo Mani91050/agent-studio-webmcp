@@ -1,7 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import scene1 from "@/assets/scene-1.jpg";
-import scene2 from "@/assets/scene-2.jpg";
-import scene3 from "@/assets/scene-3.jpg";
 
 export const Route = createFileRoute("/api/stock-search")({
   server: {
@@ -11,29 +8,13 @@ export const Route = createFileRoute("/api/stock-search")({
         const query = url.searchParams.get("query")?.trim();
 
         if (!query) {
-          return Response.json(
-            { error: "Missing query parameter" },
-            { status: 400 },
-          );
+          return Response.json({ error: "Missing query parameter" }, { status: 400 });
         }
 
-        const apiKey = process.env["PEXELS_API_KEY"];
+        const apiKey = process.env.PEXELS_API_KEY;
 
         if (!apiKey) {
-          // No key configured: fall back to mock results so the search flow
-          // stays functional in development.
-          const thumbs = [scene1, scene2, scene3];
-          const results = thumbs.map((thumbnail, i) => ({
-            id: `mock-${i + 1}`,
-            title: `${query} — clip ${i + 1}`,
-            url: thumbnail,
-            thumbnail,
-            duration: 6 + i * 2,
-            width: 1080,
-            height: 1920,
-            tags: [query],
-          }));
-          return Response.json({ results });
+          return Response.json({ error: "PEXELS_API_KEY is not configured" }, { status: 500 });
         }
 
         const pexelsUrl = new URL("https://api.pexels.com/videos/search");
@@ -52,37 +33,25 @@ export const Route = createFileRoute("/api/stock-search")({
             const message = await response.text();
             console.error("Pexels API error:", response.status, message);
 
-            return Response.json(
-              { error: "Pexels request failed" },
-              { status: 502 },
-            );
+            return Response.json({ error: "Pexels request failed" }, { status: 502 });
           }
 
           const data = await response.json();
 
           const results = (data.videos ?? [])
             .map((video: any) => {
-              const files = Array.isArray(video.video_files)
-                ? video.video_files
-                : [];
+              const files = Array.isArray(video.video_files) ? video.video_files : [];
 
               const mp4Files = files.filter(
-                (file: any) =>
-                  file.file_type === "video/mp4" &&
-                  typeof file.link === "string",
+                (file: any) => file.file_type === "video/mp4" && typeof file.link === "string",
               );
 
               const preferred =
                 mp4Files.find(
                   (file: any) =>
-                    file.width <= 1080 &&
-                    file.height > file.width &&
-                    file.width >= 480,
+                    file.width <= 1080 && file.height > file.width && file.width >= 480,
                 ) ??
-                mp4Files.find(
-                  (file: any) =>
-                    file.height > file.width,
-                ) ??
+                mp4Files.find((file: any) => file.height > file.width) ??
                 mp4Files[0];
 
               if (!preferred) return null;
@@ -104,10 +73,7 @@ export const Route = createFileRoute("/api/stock-search")({
         } catch (error) {
           console.error("Stock search failed:", error);
 
-          return Response.json(
-            { error: "Unable to search stock footage" },
-            { status: 500 },
-          );
+          return Response.json({ error: "Unable to search stock footage" }, { status: 500 });
         }
       },
     },

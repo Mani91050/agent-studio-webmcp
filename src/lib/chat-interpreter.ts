@@ -36,18 +36,11 @@ export function interpretRequest(input: string): ToolCall[] {
   }
 
   // "Make scene 2 5 seconds." / "set scene 3 duration to 8s"
-  const durationMatch =
-    lower.match(/scene\s*(\d+)/) &&
-    lower.match(/(\d+)\s*(?:seconds|secs|s\b)/);
-  if (
-    durationMatch &&
-    /(make|set|change|duration|long|length)/.test(lower)
-  ) {
+  const durationMatch = lower.match(/scene\s*(\d+)/) && lower.match(/(\d+)\s*(?:seconds|secs|s\b)/);
+  if (durationMatch && /(make|set|change|duration|long|length)/.test(lower)) {
     const n = lower.match(/scene\s*(\d+)/)![1]!;
     const secs = Number(lower.match(/(\d+)\s*(?:seconds|secs|s\b)/)![1]);
-    return [
-      { tool: "change_scene_duration", args: { scene_id: sceneId(n), duration: secs } },
-    ];
+    return [{ tool: "change_scene_duration", args: { scene_id: sceneId(n), duration: secs } }];
   }
 
   // "Replace scene 3 visual." / "new visual for scene 2" / "change scene 1 image"
