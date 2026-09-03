@@ -174,16 +174,28 @@ export function useWebMCP({ scenes, selectedScene, updateScene, logToolCall }: U
             );
           }
 
-          const data = await response.json();
+          const data: { results?: unknown[] } = await response.json();
 
-          const results: StockResult[] = (data.results ?? []).map((item: any) => ({
-            id: String(item.id),
-            title: String(item.title),
-            thumbnail: String(item.thumbnail),
-            url: String(item.url),
-            duration: Number(item.duration) || 0,
-            resolution: `${item.width}x${item.height}`,
-          }));
+          const results: StockResult[] = (data.results ?? []).map((item) => {
+            const result = item as {
+              id?: unknown;
+              title?: unknown;
+              thumbnail?: unknown;
+              url?: unknown;
+              duration?: unknown;
+              width?: unknown;
+              height?: unknown;
+            };
+
+            return {
+              id: String(result.id),
+              title: String(result.title),
+              thumbnail: String(result.thumbnail),
+              url: String(result.url),
+              duration: Number(result.duration) || 0,
+              resolution: `${result.width}x${result.height}`,
+            };
+          });
 
           if (results.length === 0) {
             return jsonResult({

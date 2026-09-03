@@ -1,5 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+interface PexelsVideoFile {
+  file_type?: string;
+  link?: string;
+  width?: number;
+  height?: number;
+}
+
+interface PexelsVideo {
+  id: number;
+  duration?: number;
+  image?: string;
+  video_files?: PexelsVideoFile[];
+}
+
+interface PexelsResponse {
+  videos?: PexelsVideo[];
+}
+
 export const Route = createFileRoute("/api/stock-search")({
   server: {
     handlers: {
@@ -36,22 +54,31 @@ export const Route = createFileRoute("/api/stock-search")({
             return Response.json({ error: "Pexels request failed" }, { status: 502 });
           }
 
-          const data = await response.json();
+          const data: PexelsResponse = await response.json();
 
           const results = (data.videos ?? [])
-            .map((video: any) => {
+            .map((video) => {
               const files = Array.isArray(video.video_files) ? video.video_files : [];
 
               const mp4Files = files.filter(
-                (file: any) => file.file_type === "video/mp4" && typeof file.link === "string",
+                (file) => file.file_type === "video/mp4" && typeof file.link === "string",
               );
 
               const preferred =
                 mp4Files.find(
-                  (file: any) =>
-                    file.width <= 1080 && file.height > file.width && file.width >= 480,
+                  (file) =>
+                    typeof file.width === "number" &&
+                    typeof file.height === "number" &&
+                    file.width <= 1080 &&
+                    file.height > file.width &&
+                    file.width >= 480,
                 ) ??
-                mp4Files.find((file: any) => file.height > file.width) ??
+                mp4Files.find(
+                  (file) =>
+                    typeof file.width === "number" &&
+                    typeof file.height === "number" &&
+                    file.height > file.width,
+                ) ??
                 mp4Files[0];
 
               if (!preferred) return null;
