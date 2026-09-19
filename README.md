@@ -1,40 +1,43 @@
-# Agent Studio Live
+# Agent Studio — WebMCP Video Editor
 
-Build the Agent Studio frontend.
+Agent Studio is a WebMCP-enabled video editing prototype where people and AI
+agents work on the same project. The creator uses a visual editor, while an
+agent uses structured WebMCP tools to inspect scenes, update captions, change
+scene durations, search for stock footage, and preview the project.
 
-Create a clean, modern dark video-editor UI with:
+> Built for The WebMCP Challenge.
 
-Left: 3-scene timeline/cards
+## Live Demo
 
-Center: vertical 9:16 video preview
+- Application: https://agent-studio-webmcp-yi9j.vercel.app/
+- Demo video: https://youtube.com/watch?v=wSXqH-0oJZk
+- Devpost submission: ADD_YOUR_DEVPOST_PROJECT_URL
 
-Right: AI Agent panel showing messages/tool activity
+## Why WebMCP?
 
-Top: Agent Studio logo, project name, Preview button
+Traditional browser agents must interpret page layouts and guess which controls
+to click. Agent Studio exposes editing operations as structured tools, allowing
+an agent to interact directly with the editor's current state.
 
-Bottom: scene controls for caption and duration
+Humans retain the visual editing experience, while agents can perform repetitive
+operations through validated tool calls.
 
-Use React + TypeScript. Make it responsive and polished.
+## WebMCP Tools
 
-For now use mock scene/video data. Do not add backend, authentication, database, or WebMCP yet.
+Agent Studio currently exposes seven tools:
 
-This project was built with [Lovable](https://lovable.dev).
+| Tool | Purpose |
+|---|---|
+| `get_project` | Returns the project name, format, duration, and scene list |
+| `get_scene` | Returns details for a selected scene |
+| `update_caption` | Updates a scene's caption text |
+| `change_scene_duration` | Changes a scene duration within the allowed range |
+| `replace_scene_visual` | Replaces a scene visual using an image URL or bundled visual |
+| `search_stock_visual` | Searches Pexels for portrait stock footage |
+| `preview_project` | Returns a summary of the project in playback order |
 
-## Build with Lovable
+Tools are registered through the browser's WebMCP model-context API. For
+development and inspection, the project also provides an in-page test shim at:
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/264300b9-c683-47dd-bb98-3c677217589f).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+```javascript
+window.__agentStudioWebMCP
